@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Teacher Dashboard</h3>
+<p>Your branches: {{ branches | join(", ") }}</p>
+<a class="btn btn-primary mb-3" href="{{ url_for('new_assignment') }}">+ New Assignment</a>
+<a class="btn btn-outline-primary mb-3" href="{{ url_for('new_lecture') }}">+ Add Lecture</a>
+
+<h5>My Assignments</h5>
+<table class="table table-bordered bg-white">
+  <tr><th>Title</th><th>Branch</th><th>Due</th><th>Submitted</th></tr>
+  {% for r in rows %}
+  <tr>
+    <td><a href="{{ url_for('assignment_detail', assignment_id=r.a.id) }}">{{ r.a.title }}</a></td>
+    <td>{{ r.a.branch }}</td>
+    <td>{{ r.a.due_date.strftime('%d %b %Y, %H:%M') }}</td>
+    <td>{{ r.done }} of {{ r.total }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="4">No assignments yet.</td></tr>
+  {% endfor %}
+</table>
+
+<h5>My Lectures</h5>
+<table class="table table-bordered bg-white">
+  <tr><th>Subject</th><th>Branch</th><th>Day</th><th>Time</th><th>Room</th></tr>
+  {% for l in lectures %}
+  <tr><td>{{ l.subject }}</td><td>{{ l.branch }}</td><td>{{ l.day }}</td>
+      <td>{{ l.start_time }}</td><td>{{ l.room }}</td></tr>
+  {% else %}
+  <tr><td colspan="5">No lectures yet.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>New Assignment</h3>
+<form method="post">
+  <input class="form-control mb-2" name="title" placeholder="Title">
+  <textarea class="form-control mb-2" name="description" placeholder="Description"></textarea>
+  <select class="form-select mb-2" name="branch">
+    {% for b in branches %}<option>{{ b }}</option>{% endfor %}
+  </select>
+  <label>Due date and time</label>
+  <input class="form-control mb-2" type="datetime-local" name="due_date">
+  <button class="btn btn-success">Create</button>
+  <a href="{{ url_for('teacher_dashboard') }}">Cancel</a>
+</form>
+{% endblock %}

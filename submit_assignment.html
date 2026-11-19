@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>{{ a.title }}</h3>
+<p>Due: {{ a.due_date.strftime('%d %b %Y, %H:%M') }}</p>
+<p>{{ a.description }}</p>
+
+{% if existing %}
+  <div class="alert alert-success">Submitted on
+    {{ existing.submitted_at.strftime('%d %b %Y, %H:%M') }}.</div>
+{% elif closed %}
+  <div class="alert alert-danger">The due date has passed. Submission is closed.</div>
+{% else %}
+  <form method="post" enctype="multipart/form-data">
+    <input class="form-control mb-2" type="file" name="file">
+    <button class="btn btn-success">Submit</button>
+  </form>
+{% endif %}
+<a href="{{ url_for('student_dashboard') }}">Back</a>
+{% endblock %}

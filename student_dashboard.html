@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Student Dashboard</h3>
+<p>Branch: <b>{{ current_user.branch }}</b></p>
+
+<h5>Today's Lectures ({{ today }})</h5>
+<table class="table table-bordered bg-white">
+  <tr><th>Time</th><th>Subject</th><th>Room</th></tr>
+  {% for l in today_lectures %}
+  <tr><td>{{ l.start_time }}</td><td>{{ l.subject }}</td><td>{{ l.room }}</td></tr>
+  {% else %}
+  <tr><td colspan="3">No lectures today.</td></tr>
+  {% endfor %}
+</table>
+
+<ul class="nav nav-tabs mt-4">
+  <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#pending">
+    Pending ({{ pending|length }})</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#completed">
+    Completed ({{ completed|length }})</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#timetable">
+    Weekly Timetable</button></li>
+</ul>
+
+<div class="tab-content bg-white border border-top-0 p-3">
+  <div class="tab-pane fade show active" id="pending">
+    <table class="table">
+      <tr><th>Title</th><th>Due</th><th>Time left</th><th></th></tr>
+      {% for r in pending %}
+      <tr>
+        <td>{{ r.a.title }}</td>
+        <td>{{ r.a.due_date.strftime('%d %b %Y, %H:%M') }}</td>
+        <td class="{{ 'text-danger fw-bold' if r.overdue else '' }}">{{ r.left }}</td>
+        <td><a class="btn btn-sm btn-primary" href="{{ url_for('submit_assignment', assignment_id=r.a.id) }}">
+          {{ 'View' if r.overdue else 'Submit' }}</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4">No pending assignments. 🎉</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div class="tab-pane fade" id="completed">
+    <table class="table">
+      <tr><th>Title</th><th>Due</th><th>Submitted at</th></tr>
+      {% for r in completed %}
+      <tr>
+        <td>{{ r.a.title }}</td>
+        <td>{{ r.a.due_date.strftime('%d %b %Y, %H:%M') }}</td>
+        <td class="text-success">{{ r.sub.submitted_at.strftime('%d %b %Y, %H:%M') }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="3">Nothing submitted yet.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div class="tab-pane fade" id="timetable">
+    {% for day, items in week.items() %}
+      <b>{{ day }}</b>
+      {% if items %}
+        <ul>{% for l in items %}<li>{{ l.start_time }} - {{ l.subject }} ({{ l.room }})</li>{% endfor %}</ul>
+      {% else %}<p class="text-muted">No lectures</p>{% endif %}
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>{{ a.title }}</h3>
+<p>Branch: {{ a.branch }} | Due: {{ a.due_date.strftime('%d %b %Y, %H:%M') }}</p>
+<p>{{ a.description }}</p>
+<h5>{{ done }} of {{ total }} submitted</h5>
+<table class="table table-bordered bg-white">
+  <tr><th>ID</th><th>Name</th><th>Status</th><th>Submitted at</th></tr>
+  {% for r in rows %}
+  <tr>
+    <td>{{ r.student.erp_id }}</td>
+    <td>{{ r.student.name }}</td>
+    <td>{% if r.sub %}<span class="text-success">Submitted</span>
+        {% else %}<span class="text-danger">Pending</span>{% endif %}</td>
+    <td>{% if r.sub %}{{ r.sub.submitted_at.strftime('%d %b, %H:%M') }}{% endif %}</td>
+  </tr>
+  {% endfor %}
+</table>
+<a href="{{ url_for('teacher_dashboard') }}">Back</a>
+{% endblock %}
