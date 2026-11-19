@@ -2,7 +2,7 @@ import os
 from werkzeug.utils import secure_filename
 
 from flask import (Flask, render_template, request, redirect,
-                   url_for, flash, abort)
+                   url_for, flash, abort, send_from_directory)
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (LoginManager, UserMixin, login_user,
                          logout_user, login_required, current_user)
@@ -319,7 +319,8 @@ def submit_assignment(assignment_id):
                 flash("File type not allowed. Use: " + ", ".join(sorted(ALLOWED_EXT)), "danger")
             else:
                 name = f"{a.id}_{current_user.id}_{secure_filename(f.filename)}"
-                f.save(os.path.join(app.config["UPLOAD_FOLDER"], name))
+              os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=true)
+               f.save(os.path.join(app.config["UPLOAD_FOLDER"], name))
                 db.session.add(Submission(assignment_id=a.id,
                                           student_id=current_user.id,
                                           filename=name))
@@ -329,7 +330,11 @@ def submit_assignment(assignment_id):
 
     return render_template("submit_assignment.html", a=a,
                            existing=existing, closed=closed)
-
+  @app.route("/uploads/<path: filename>")
+@login_required 
+def uploaded_file(filename):
+  return send_from_directory(app.config["UPLOAD_FOLDER"], filename, as_attachment=true)
+  
 
 @app.errorhandler(403)
 def forbidden(e):
@@ -338,4 +343,3 @@ if __name__=="__main__":
     with app.app_context():
         db.create_all()
     app.run(debug=True)
-    app.run(debug=False)
