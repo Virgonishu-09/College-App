@@ -5,7 +5,7 @@
 <p>{{ a.description }}</p>
 <h5>{{ done }} of {{ total }} submitted</h5>
 <table class="table table-bordered bg-white">
-  <tr><th>ID</th><th>Name</th><th>Status</th><th>Submitted at</th></tr>
+  <tr><th>ID</th><th>Name</th><th>Status</th><th>Submitted at</th><th>File</th></tr>
   {% for r in rows %}
   <tr>
     <td>{{ r.student.erp_id }}</td>
@@ -13,6 +13,13 @@
     <td>{% if r.sub %}<span class="text-success">Submitted</span>
         {% else %}<span class="text-danger">Pending</span>{% endif %}</td>
     <td>{% if r.sub %}{{ r.sub.submitted_at.strftime('%d %b, %H:%M') }}{% endif %}</td>
+  <td>
+   ( % if r.sub and r.sub.filename %}
+        <a href="{{ url_for('uploaded_file', filename=r.sub.filename) }}" class="btn btn-sm btn-primary">Download</a>
+      {% else %}
+    -
+      {% endif %}
+  </td>
   </tr>
   {% endfor %}
 </table>
