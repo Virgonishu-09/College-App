@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-3">📅 Academic Calendar</h3>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="card-title">Upload the calendar (CSV file)</h5>
+    <p class="small text-muted mb-2">
+      Columns: <b>date</b>, <b>title</b> are required. Optional: end_date, type
+      (holiday / exam / vacation / event), branch (ALL or one of yours), description.
+      Dates can be 2026-12-25 or 25-12-2026. Re-uploading is safe: events that already exist are skipped.
+    </p>
+    <form method="post" enctype="multipart/form-data" class="d-flex flex-wrap gap-2">
+      <input class="form-control" style="max-width:320px" type="file" name="file" accept=".csv" required>
+      <button class="btn btn-success">Upload</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('calendar_template') }}">Download template</a>
+    </form>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="card-title">Or add one event</h5>
+    <form method="post" action="{{ url_for('add_calendar_event') }}">
+      <div class="row g-2">
+        <div class="col-md-6"><input class="form-control" name="title" maxlength="150" placeholder="Title" required></div>
+        <div class="col-md-3">
+          <select class="form-select" name="kind">
+            <option value="holiday">Holiday</option>
+            <option value="exam">Exam / test</option>
+            <option value="vacation">Vacation</option>
+            <option value="event">Other event</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <select class="form-select" name="branch">
+            <option value="ALL">All branches</option>
+            {% for b in branches %}<option>{{ b }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3"><label class="form-text">Date</label><input class="form-control" type="date" name="date" required></div>
+        <div class="col-md-3"><label class="form-text">End date (optional)</label><input class="form-control" type="date" name="end_date"></div>
+        <div class="col-md-6"><label class="form-text">Note (optional)</label><input class="form-control" name="description" placeholder="e.g. Check the exam timetable"></div>
+        <div class="col-12"><button class="btn btn-primary">Add event</button></div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<h5>Calendar events</h5>
+<div class="table-responsive">
+<table class="table table-hover align-middle">
+  <tr><th></th><th>Event</th><th>Date</th><th>For</th><th></th></tr>
+  {% for r in rows %}
+  <tr class="{{ 'text-muted' if r.past else '' }}">
+    <td>{{ r.icon }}</td>
+    <td>{{ r.title }}{% if r.detail %}<div class="small text-muted">{{ r.detail | truncate(70) }}</div>{% endif %}</td>
+    <td>{{ r.range }}{% if not r.past %}<div class="small">{{ r.when }}</div>{% endif %}</td>
+    <td>{{ 'All' if r.branch == 'ALL' else r.branch }}</td>
+    <td>{% if r.mine %}
+      <form method="post" action="{{ url_for('delete_calendar_event', event_id=r.id) }}"
+            onsubmit="return confirm('Delete this event?')">
+        <button class="btn btn-sm btn-outline-danger">Delete</button>
+      </form>{% endif %}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="5" class="text-muted">No events yet. Upload a CSV or add one above.</td></tr>
+  {% endfor %}
+</table>
+</div>
+<a href="{{ url_for('teacher_dashboard') }}">Back to dashboard</a>
+{% endblock %}

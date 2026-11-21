@@ -1,19 +1,31 @@
 {% extends "base.html" %}
 {% block content %}
-<h3>{{ a.title }}</h3>
-<p>Due: {{ a.due_date.strftime('%d %b %Y, %H:%M') }}</p>
-<p>{{ a.description }}</p>
+<div class="card mb-3">
+  <div class="card-body">
+    <h4 class="card-title">{{ a.title }}</h4>
+    <p class="text-muted mb-2">Due: <b>{{ a.due_date.strftime('%d %b %Y, %H:%M') }}</b></p>
+    {% if a.description %}<p>{{ a.description }}</p>{% endif %}
+    {% if a.remarks %}
+      <div class="alert alert-warning">
+        <b>Important Remarks:</b><br>{{ a.remarks }}
+      </div>
+    {% endif %}
+    {% if a.attachment %}
+      <a class="btn btn-outline-primary btn-sm"
+         href="{{ url_for('download_attachment', assignment_id=a.id) }}">
+        Download: {{ a.attachment_name }}
+      </a>
+    {% endif %}
+  </div>
+</div>
 
-{% if existing %}
-  <div class="alert alert-success">Submitted on
-    {{ existing.submitted_at.strftime('%d %b %Y, %H:%M') }}.</div>
-{% elif closed %}
-  <div class="alert alert-danger">The due date has passed. Submission is closed.</div>
+{% if closed %}
+  <div class="alert alert-danger">The due date has passed.</div>
 {% else %}
-  <form method="post" enctype="multipart/form-data">
-    <input class="form-control mb-2" type="file" name="file">
-    <button class="btn btn-success">Submit</button>
-  </form>
+  <div class="alert alert-info">
+    This assignment must be submitted <b>offline (hard copy)</b> directly to your teacher before the due date.
+  </div>
 {% endif %}
-<a href="{{ url_for('student_dashboard') }}">Back</a>
+
+<a class="d-inline-block mt-2" href="{{ url_for('student_dashboard') }}">Back to Dashboard</a>
 {% endblock %}

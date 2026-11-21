@@ -1,11 +1,16 @@
 {% extends "base.html" %}
 {% block content %}
 <h3>{{ a.title }}</h3>
-<p>Branch: {{ a.branch }} | Due: {{ a.due_date.strftime('%d %b %Y, %H:%M') }}</p>
-<p>{{ a.description }}</p>
+<p class="text-muted">Branch: {{ a.branch }} | Due: {{ a.due_date.strftime('%d %b %Y, %H:%M') }}</p>
+{% if a.description %}<p>{{ a.description }}</p>{% endif %}
+{% if a.remarks %}<div class="alert alert-warning"><b>Remarks:</b> {{ a.remarks }}</div>{% endif %}
+{% if a.attachment %}
+<p><a href="{{ url_for('download_attachment', assignment_id=a.id) }}">Attachment: {{ a.attachment_name }}</a></p>
+{% endif %}
 <h5>{{ done }} of {{ total }} submitted</h5>
-<table class="table table-bordered bg-white">
-  <tr><th>ID</th><th>Name</th><th>Status</th><th>Submitted at</th><th>File</th></tr>
+<div class="table-responsive">
+<table class="table table-hover align-middle">
+  <tr><th>ID</th><th>Name</th><th>Status</th><th>Submitted at</th></tr>
   {% for r in rows %}
   <tr>
     <td>{{ r.student.erp_id }}</td>
@@ -13,15 +18,9 @@
     <td>{% if r.sub %}<span class="text-success">Submitted</span>
         {% else %}<span class="text-danger">Pending</span>{% endif %}</td>
     <td>{% if r.sub %}{{ r.sub.submitted_at.strftime('%d %b, %H:%M') }}{% endif %}</td>
-  <td>
-   ( % if r.sub and r.sub.filename %}
-        <a href="{{ url_for('uploaded_file', filename=r.sub.filename) }}" class="btn btn-sm btn-primary">Download</a>
-      {% else %}
-    -
-      {% endif %}
-  </td>
   </tr>
   {% endfor %}
 </table>
+</div>
 <a href="{{ url_for('teacher_dashboard') }}">Back</a>
 {% endblock %}

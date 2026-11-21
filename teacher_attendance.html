@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-3">Daily Attendance</h3>
+
+{% if today_lectures %}
+<div class="alert alert-info py-2">
+  <b>Today's Scheduled Lectures:</b>
+  {% for l in today_lectures %}
+    <a class="btn btn-sm btn-outline-primary ms-1 my-1"
+       href="{{ url_for('take_attendance', branch=l.branch, subject=l.subject) }}">
+      {{ l.start_time }} - {{ l.subject }} ({{ l.branch }})
+    </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-3">
+    <select class="form-select" name="branch" onchange="this.form.submit()">
+      {% for b in branches %}
+        <option value="{{ b }}" {% if b == selected_branch %}selected{% endif %}>{{ b }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-4">
+    <input class="form-control" list="subjectList" name="subject" value="{{ selected_subject }}" placeholder="Subject" required>
+    <datalist id="subjectList">
+      {% for s in all_subjects %}<option value="{{ s }}">{% endfor %}
+    </datalist>
+  </div>
+  <div class="col-md-3">
+    <input class="form-control" type="date" name="att_date" value="{{ selected_date }}">
+  </div>
+  <div class="col-md-2">
+    <button class="btn btn-secondary w-100">Load</button>
+  </div>
+</form>
+
+<form method="post">
+  <input type="hidden" name="branch" value="{{ selected_branch }}">
+  <input type="hidden" name="subject" value="{{ selected_subject }}">
+  <input type="hidden" name="att_date" value="{{ selected_date }}">
+
+  <table class="table table-hover bg-white">
+    <tr><th>Roll No</th><th>Student Name</th><th>Present</th></tr>
+    {% for s in students %}
+    <tr>
+      <td><b>{{ s.roll_no or s.erp_id }}</b></td>
+      <td>{{ s.name }}</td>
+      <td>
+        <input class="form-check-input" type="checkbox" name="present_ids" value="{{ s.id }}"
+               {% if existing_map.get(s.id, 'Present') == 'Present' %}checked{% endif %}>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="3" class="text-muted">No students registered in {{ selected_branch }} yet.</td></tr>
+    {% endfor %}
+  </table>
+  <button class="btn btn-success">Save Daily Attendance</button>
+  <a class="btn btn-link" href="{{ url_for('teacher_dashboard') }}">Back</a>
+</form>
+{% endblock %}

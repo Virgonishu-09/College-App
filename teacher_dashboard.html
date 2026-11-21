@@ -1,12 +1,124 @@
 {% extends "base.html" %}
 {% block content %}
-<h3>Teacher Dashboard</h3>
-<p>Your branches: {{ branches | join(", ") }}</p>
-<a class="btn btn-primary mb-3" href="{{ url_for('new_assignment') }}">+ New Assignment</a>
-<a class="btn btn-outline-primary mb-3" href="{{ url_for('new_lecture') }}">+ Add Lecture</a>
+<h3 class="mb-1">Teacher Dashboard</h3>
+<p class="text-muted">Your branches: <b>{{ branches | join(", ") }}</b></p>
+
+<div class="mb-4 d-flex flex-wrap gap-2">
+  <a class="btn btn-primary" href="{{ url_for('new_assignment') }}">+ New Assignment</a>
+  <a class="btn btn-outline-primary" href="{{ url_for('new_lecture') }}">+ Add Lecture</a>
+  <a class="btn btn-success" href="{{ url_for('take_attendance') }}">✓ Take Today's Attendance</a>
+  <a class="btn btn-outline-primary" href="{{ url_for('teacher_announcements') }}">📢 Announcements</a>
+  <a class="btn btn-outline-primary" href="{{ url_for('teacher_calendar') }}">📅 Academic Calendar</a>
+</div>
+
+<!-- DEFAULTER LIST BY SUBJECT -->
+<div class="card border-danger mb-4">
+  <div class="card-body">
+    <h5 class="card-title text-danger">Defaulter List (Below 75% Attendance)</h5>
+    <table class="table table-sm mb-0">
+      <tr><th>Branch</th><th>Subject</th><th>Defaulter Roll Numbers</th></tr>
+      {% for d in defaulters_by_subject %}
+      <tr>
+        <td>{{ d.branch }}</td>
+        <td><b>{{ d.subject }}</b></td>
+        <td>
+          {% for roll in d.rolls %}
+            <span class="badge bg-danger me-1">{{ roll }}</span>
+          {% endfor %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="3" class="text-success">No defaulters right now.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+
+<!-- CLASS ATTENDANCE SUMMARY -->
+<h5>Class Attendance Summary</h5>
+<table class="table table-hover mb-4">
+  <tr><th>Branch</th><th>Subject</th><th>Total Class Attendance %</th></tr>
+  {% for c in class_summary %}
+  <tr>
+    <td>{{ c.branch }}</td>
+    <td>{{ c.subject }}</td>
+    <td><b>{{ c.avg_pct }}%</b></td>
+  </tr>
+  {% else %}
+  <tr><td colspan="3" class="text-muted">No attendance recorded yet.</td></tr>
+  {% endfor %}
+</table>
+
+<!-- BULK IMPORT STUDENTS FROM CSV -->
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="card-title">Import Student Database (CSV)</h5>
+    <form method="post" action="{{ url_for('import_students_csv') }}" enctype="multipart/form-data" class="row g-2">
+      <div class="col-md-9">
+        <input class="form-control" type="file" name="csv_file" accept=".csv" required>
+        <div class="form-text">Columns: roll_no, erp_id, name, branch, password</div>
+      </div>
+      <div class="col-md-3">
+        <button class="btn btn-primary w-100">Import Students</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="card-title">Upload Study Material</h5>
+    <form method="post" action="{{ url_for('add_material') }}" enctype="multipart/form-data">
+      <div class="row g-2">
+        <div class="col-md-8">
+          <input class="form-control" name="title" placeholder="Title (required)" maxlength="120" required>
+        </div>
+        <div class="col-md-4">
+          <select class="form-select" name="branch">
+            {% for b in branches %}<option>{{ b }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-12">
+          <textarea class="form-control" name="description" rows="3" placeholder="Description (optional)"></textarea>
+        </div>
+        <div class="col-12">
+          <input class="form-control" type="file" name="file">
+          <div class="form-text">File is optional. Allowed: pdf, doc, docx, txt, png, jpg, jpeg, zip. Max 10 MB.</div>
+        </div>
+        <div class="col-12"><button class="btn btn-success">Upload</button></div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<h5>My Study Material</h5>
+<div class="table-responsive mb-4">
+<table class="table table-hover align-middle">
+  <tr><th>Title</th><th>Branch</th><th>Description</th><th>File</th><th>Added</th><th></th></tr>
+  {% for m in materials %}
+  <tr>
+    <td>{{ m.title }}</td>
+    <td>{{ m.branch }}</td>
+    <td>{{ (m.description or '-') | truncate(60) }}</td>
+    <td>{% if m.filename %}<a href="{{ url_for('download_material', material_id=m.id) }}">{{ m.original_name }}</a>
+        {% else %}<span class="text-muted">No file</span>{% endif %}</td>
+    <td>{{ m.uploaded_at.strftime('%d %b, %H:%M') }}</td>
+    <td>
+      <form method="post" action="{{ url_for('delete_material', material_id=m.id) }}"
+            onsubmit="return confirm('Delete this material?')">
+        <button class="btn btn-sm btn-outline-danger">Delete</button>
+      </form>
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="6" class="text-muted">Nothing uploaded yet.</td></tr>
+  {% endfor %}
+</table>
+</div>
 
 <h5>My Assignments</h5>
-<table class="table table-bordered bg-white">
+<div class="table-responsive mb-4">
+<table class="table table-hover align-middle">
   <tr><th>Title</th><th>Branch</th><th>Due</th><th>Submitted</th></tr>
   {% for r in rows %}
   <tr>
@@ -16,18 +128,21 @@
     <td>{{ r.done }} of {{ r.total }}</td>
   </tr>
   {% else %}
-  <tr><td colspan="4">No assignments yet.</td></tr>
+  <tr><td colspan="4" class="text-muted">No assignments yet.</td></tr>
   {% endfor %}
 </table>
+</div>
 
 <h5>My Lectures</h5>
-<table class="table table-bordered bg-white">
+<div class="table-responsive">
+<table class="table table-hover align-middle">
   <tr><th>Subject</th><th>Branch</th><th>Day</th><th>Time</th><th>Room</th></tr>
   {% for l in lectures %}
   <tr><td>{{ l.subject }}</td><td>{{ l.branch }}</td><td>{{ l.day }}</td>
       <td>{{ l.start_time }}</td><td>{{ l.room }}</td></tr>
   {% else %}
-  <tr><td colspan="5">No lectures yet.</td></tr>
+  <tr><td colspan="5" class="text-muted">No lectures yet.</td></tr>
   {% endfor %}
 </table>
+</div>
 {% endblock %}

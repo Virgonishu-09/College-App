@@ -1,29 +1,91 @@
 {% extends "base.html" %}
 {% block content %}
-<h3>Student Dashboard</h3>
-<p>Branch: <b>{{ current_user.branch }}</b></p>
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+  <div>
+    <h3 class="mb-0">Welcome, {{ current_user.name }}</h3>
+    <p class="text-muted">Branch: <b>{{ current_user.branch }}</b></p>
+  </div>
+  <button type="button" class="btn btn-sm btn-outline-primary" id="test-alert">🔔 Test pop-up</button>
+</div>
+
+{% if att.defaulters %}
+<div class="alert alert-danger">
+  <b>⚠️ Defaulter Alert (Below 75%):</b>
+  You are currently on the defaulter list for:
+  <ul class="mb-0 mt-1">
+    {% for d in att.defaulters %}
+      <li><b>{{ d.subject }}</b> — {{ d.pct }}% ({{ d.present }}/{{ d.total }} lectures)</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% if on_break %}
+<div class="alert alert-info">🎉 No lectures today - it's a holiday or vacation. Enjoy!</div>
+{% endif %}
+
+<!-- ANNOUNCEMENTS + UPCOMING EVENTS -->
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="card-title">📢 Announcements &amp; Upcoming Events</h5>
+    <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0 feed">
+      {% for f in feed %}
+      <tr>
+        <td class="feed-icon">{{ f.icon }}</td>
+        <td class="feed-title">
+          {% if f.detail %}
+          <details><summary>{{ f.title }}</summary><div class="feed-detail">{{ f.detail }}</div></details>
+          {% else %}
+          <div class="feed-line">{{ f.title }}</div>
+          {% endif %}
+        </td>
+        <td class="text-nowrap text-muted small">{{ f.when }}</td>
+        <td class="text-nowrap">{% if f.new %}<span class="blink-new" title="New">🆕</span>{% endif %}</td>
+      </tr>
+      {% else %}
+      <tr><td class="text-muted">Nothing new right now.</td></tr>
+      {% endfor %}
+    </table>
+    </div>
+  </div>
+</div>
 
 <h5>Today's Lectures ({{ today }})</h5>
-<table class="table table-bordered bg-white">
-  <tr><th>Time</th><th>Subject</th><th>Room</th></tr>
+<div class="table-responsive mb-4">
+<table class="table table-hover align-middle">
+  <tr><th>Time</th><th>Subject</th><th>Venue</th><th>Faculty</th></tr>
   {% for l in today_lectures %}
-  <tr><td>{{ l.start_time }}</td><td>{{ l.subject }}</td><td>{{ l.room }}</td></tr>
+  <tr><td>{{ l.start_time }}</td><td>{{ l.subject }}</td><td>{{ l.room }}</td>
+      <td>{{ faculty.get(l.teacher_id, '-') }}</td></tr>
   {% else %}
-  <tr><td colspan="3">No lectures today.</td></tr>
+  <tr><td colspan="4" class="text-muted">No lectures today.</td></tr>
   {% endfor %}
 </table>
+</div>
 
-<ul class="nav nav-tabs mt-4">
-  <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#pending">
+<ul class="nav nav-tabs flex-nowrap overflow-auto">
+  <li class="nav-item">
+    <button class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#attendance">
+      Attendance ({{ att.overall_pct }}%)
+    </button>
+  </li>
+  <li class="nav-item"><button class="nav-link active text-nowrap" data-bs-toggle="tab" data-bs-target="#pending">
     Pending ({{ pending|length }})</button></li>
-  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#completed">
+  <li class="nav-item"><button class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#completed">
     Completed ({{ completed|length }})</button></li>
-  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#timetable">
-    Weekly Timetable</button></li>
+  <li class="nav-item"><button class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#calendar">
+    Academic Calendar</button></li>
+  <li class="nav-item"><button class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#timetable">
+    Timetable</button></li>
+  <li class="nav-item"><button class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#material">
+    Study Material ({{ materials|length }})</button></li>
 </ul>
 
 <div class="tab-content bg-white border border-top-0 p-3">
+
   <div class="tab-pane fade show active" id="pending">
+    <div class="table-responsive">
     <table class="table">
       <tr><th>Title</th><th>Due</th><th>Time left</th><th></th></tr>
       {% for r in pending %}
@@ -31,16 +93,17 @@
         <td>{{ r.a.title }}</td>
         <td>{{ r.a.due_date.strftime('%d %b %Y, %H:%M') }}</td>
         <td class="{{ 'text-danger fw-bold' if r.overdue else '' }}">{{ r.left }}</td>
-        <td><a class="btn btn-sm btn-primary" href="{{ url_for('submit_assignment', assignment_id=r.a.id) }}">
-          {{ 'View' if r.overdue else 'Submit' }}</a></td>
+        <td><a class="btn btn-sm btn-primary" href="{{ url_for('submit_assignment', assignment_id=r.a.id) }}">View</a></td>
       </tr>
       {% else %}
-      <tr><td colspan="4">No pending assignments. 🎉</td></tr>
+      <tr><td colspan="4" class="text-muted">No pending assignments. 🎉</td></tr>
       {% endfor %}
     </table>
+    </div>
   </div>
 
   <div class="tab-pane fade" id="completed">
+    <div class="table-responsive">
     <table class="table">
       <tr><th>Title</th><th>Due</th><th>Submitted at</th></tr>
       {% for r in completed %}
@@ -50,18 +113,107 @@
         <td class="text-success">{{ r.sub.submitted_at.strftime('%d %b %Y, %H:%M') }}</td>
       </tr>
       {% else %}
-      <tr><td colspan="3">Nothing submitted yet.</td></tr>
+      <tr><td colspan="3" class="text-muted">Nothing submitted yet.</td></tr>
       {% endfor %}
     </table>
+    </div>
+  </div>
+
+  <div class="tab-pane fade" id="calendar">
+    <div class="table-responsive">
+    <table class="table">
+      <tr><th></th><th>Event</th><th>Date</th><th>When</th></tr>
+      {% for r in calendar_rows %}
+      <tr>
+        <td>{{ r.icon }}</td>
+        <td>{{ r.title }}{% if r.detail %}<div class="small text-muted">{{ r.detail }}</div>{% endif %}</td>
+        <td class="text-nowrap">{{ r.range }}</td>
+        <td class="text-nowrap">{{ r.when }}{% if r.new %} <span class="blink-new">🆕</span>{% endif %}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" class="text-muted">No upcoming events. The calendar will appear here once it is uploaded.</td></tr>
+      {% endfor %}
+    </table>
+    </div>
   </div>
 
   <div class="tab-pane fade" id="timetable">
     {% for day, items in week.items() %}
       <b>{{ day }}</b>
       {% if items %}
-        <ul>{% for l in items %}<li>{{ l.start_time }} - {{ l.subject }} ({{ l.room }})</li>{% endfor %}</ul>
+        <ul>{% for l in items %}<li>{{ l.start_time }} - {{ l.subject }} ({{ l.room }}, {{ faculty.get(l.teacher_id, '-') }})</li>{% endfor %}</ul>
       {% else %}<p class="text-muted">No lectures</p>{% endif %}
     {% endfor %}
   </div>
+
+  <div class="tab-pane fade" id="material">
+    {% for m in materials %}
+    <div class="border rounded p-3 mb-2">
+      <div class="d-flex justify-content-between align-items-start gap-2">
+        <div>
+          <b>{{ m.title }}</b>
+          <div class="text-muted small">{{ m.uploaded_at.strftime('%d %b %Y, %H:%M') }}</div>
+        </div>
+        {% if m.filename %}
+        <a class="btn btn-sm btn-primary" href="{{ url_for('download_material', material_id=m.id) }}">Download</a>
+        {% endif %}
+      </div>
+      {% if m.description %}<p class="mb-0 mt-2">{{ m.description }}</p>{% endif %}
+    </div>
+    {% else %}
+    <p class="text-muted mb-0">No study material for your branch yet.</p>
+    {% endfor %}
+  </div>
+
+  <div class="tab-pane fade" id="attendance">
+    <div class="row align-items-center">
+      <div class="col-md-4 text-center mb-3">
+        <h6>Overall Attendance: {{ att.overall_pct }}%</h6>
+        <canvas id="attendancePieChart" style="max-height: 220px;"></canvas>
+      </div>
+      <div class="col-md-8">
+        <h6>Subject-wise Attendance</h6>
+        <table class="table table-sm">
+          <tr><th>Subject</th><th>Present / Total</th><th>%</th><th>Status</th></tr>
+          {% for s in att.subjects %}
+          <tr>
+            <td>{{ s.subject }}</td>
+            <td>{{ s.present }} / {{ s.total }}</td>
+            <td><b>{{ s.pct }}%</b></td>
+            <td>
+              {% if s.defaulter %}
+                <span class="badge bg-danger">Defaulter (&lt;75%)</span>
+              {% else %}
+                <span class="badge bg-success">Safe</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="text-muted">No attendance records yet.</td></tr>
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+  </div>
+
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const attPresent = { attpresent };
+  const attAbsent = { attabsent };
+  const ctx = document.getElementById("attendancePieChart");
+  if (ctx && (attPresent + attAbsent) > 0) {
+    new Chart(ctx, {
+      type: "pie",
+      data: {
+        labels: ["Present", "Absent"],
+        datasets: [{
+          data: [attPresent, attAbsent],
+          backgroundColor: ["#198754", "#dc3545"]
+        }]
+      }
+    });
+  }
+</script>
 {% endblock %}

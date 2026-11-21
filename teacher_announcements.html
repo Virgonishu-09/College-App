@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-3">📢 Announcements</h3>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="card-title">Post a new announcement</h5>
+    <form method="post">
+      <input class="form-control mb-2" name="title" maxlength="150" required
+             placeholder="Short headline (one line, required)">
+      <textarea class="form-control mb-2" name="body" rows="3"
+                placeholder="More details (optional)"></textarea>
+      <div class="row g-2">
+        <div class="col-md-6">
+          <select class="form-select" name="branch">
+            <option value="ALL">All branches</option>
+            {% for b in branches %}<option>{{ b }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6"><button class="btn btn-success w-100">Post</button></div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<h5>My announcements</h5>
+<div class="table-responsive">
+<table class="table table-hover align-middle">
+  <tr><th>Title</th><th>For</th><th>Posted</th><th></th></tr>
+  {% for a in items %}
+  <tr>
+    <td>{{ a.title }}{% if a.body %}<div class="small text-muted">{{ a.body | truncate(80) }}</div>{% endif %}</td>
+    <td>{{ 'All branches' if a.branch == 'ALL' else a.branch }}</td>
+    <td>{{ a.created_at.strftime('%d %b, %H:%M') }}</td>
+    <td>
+      <form method="post" action="{{ url_for('delete_announcement', item_id=a.id) }}"
+            onsubmit="return confirm('Delete this announcement?')">
+        <button class="btn btn-sm btn-outline-danger">Delete</button>
+      </form>
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="4" class="text-muted">No announcements yet.</td></tr>
+  {% endfor %}
+</table>
+</div>
+<a href="{{ url_for('teacher_dashboard') }}">Back to dashboard</a>
+{% endblock %}
